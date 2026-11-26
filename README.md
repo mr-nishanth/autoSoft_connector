@@ -52,6 +52,27 @@ Document the actual AutoSoft extraction sequence.
 
 AutoSoft workflow steps must be documented independently. Never assume they match Automate, CDK or Reynolds.
 
+## Order Tracking API
+
+Backend endpoint (KAN-9) backed by an in-memory store with two sample orders
+(`ORD-1001`, `ORD-1002`).
+
+`GET /api/v1/orders/{order_id}/tracking`
+
+- 200 response: `{"order_id": string, "status": "pending" | "shipped" | "delivered", "updated_at": string}`
+  where `updated_at` is an ISO 8601 timestamp in UTC.
+- 404 response for an unknown `order_id`: `{"detail": string}`.
+
+Run the application with `uvicorn app.main:app` (requires `requirements.txt`).
+
+## Running Tests
+
+Install the dependencies from `requirements.txt`, then from the repository root run:
+
+```
+python -m pytest -q
+```
+
 ## Repository Development Guidelines
 
 1. Preserve existing AutoSoft extraction behaviour.
