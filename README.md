@@ -52,6 +52,32 @@ Document the actual AutoSoft extraction sequence.
 
 AutoSoft workflow steps must be documented independently. Never assume they match Automate, CDK or Reynolds.
 
+## Vehicle Sync (worker)
+
+`autosoft_connector.sync_vehicle(vin, client)` fetches a vehicle through the
+client's `get_vehicle(vin)` method and maps the returned `VehicleRecord`
+(from `automate_connector`, fields `vin`, `make`, `model`, `year`) to the
+Autosoft vehicle format:
+
+| VehicleRecord | Autosoft key |
+|---|---|
+| `vin` | `vehicle_id` |
+| `make` | `manufacturer` |
+| `model` | `model_name` |
+| `year` | `model_year` |
+
+The VIN must be a 17-character string of uppercase A-Z and 0-9 excluding I, O
+and Q; otherwise `VehicleInputError` (a `ValueError`) is raised before the
+client is called. Client errors (`VehicleNotFoundError`, `ReynoldsError`,
+`ReynoldsServerError`, `ReynoldsTransportError`, `InvalidResponseError`)
+propagate unchanged. This package does not import `automate_connector`.
+
+Run the offline test suite with:
+
+```
+python -m pytest -q
+```
+
 ## Repository Development Guidelines
 
 1. Preserve existing AutoSoft extraction behaviour.
