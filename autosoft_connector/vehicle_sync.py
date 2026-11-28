@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, Protocol
 
-__all__ = ["VehicleClient", "VehicleInputError", "sync_vehicle"]
+__all__ = ["VehicleClient", "VehicleInputError", "normalise_make", "sync_vehicle"]
 
 _VIN_LENGTH = 17
 # Uppercase A-Z/0-9 excluding I, O and Q (backend VIN rule).
@@ -43,6 +43,22 @@ def _validate_vin(vin: object) -> str:
             "VIN must contain only uppercase A-Z and 0-9 excluding I, O and Q"
         )
     return vin
+
+
+def normalise_make(make: str) -> str:
+    """Return ``make`` stripped, with internal whitespace collapsed and title-cased.
+
+    Raises VehicleInputError if ``make`` is not a str or is empty after
+    stripping whitespace.
+    """
+    if not isinstance(make, str):
+        raise VehicleInputError(
+            f"make must be a str, got {type(make).__name__}"
+        )
+    cleaned = re.sub(r"\s+", " ", make).strip()
+    if not cleaned:
+        raise VehicleInputError("make must not be empty")
+    return cleaned.title()
 
 
 def sync_vehicle(vin: str, client: VehicleClient) -> Dict[str, Any]:
