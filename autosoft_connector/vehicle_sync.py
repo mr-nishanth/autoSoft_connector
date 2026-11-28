@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, Protocol
 
-__all__ = ["VehicleClient", "VehicleInputError", "sync_vehicle"]
+__all__ = ["VehicleClient", "VehicleInputError", "normalise_vin", "sync_vehicle"]
 
 _VIN_LENGTH = 17
 # Uppercase A-Z/0-9 excluding I, O and Q (backend VIN rule).
@@ -43,6 +43,19 @@ def _validate_vin(vin: object) -> str:
             "VIN must contain only uppercase A-Z and 0-9 excluding I, O and Q"
         )
     return vin
+
+
+def normalise_vin(vin: str) -> str:
+    """Strip surrounding whitespace, upper-case and validate a VIN.
+
+    Returns the normalised VIN. Raises VehicleInputError if the input is not a
+    str or is not a valid VIN after normalisation. Does not change sync_vehicle.
+    """
+    if not isinstance(vin, str):
+        raise VehicleInputError(
+            f"VIN must be a str, got {type(vin).__name__}"
+        )
+    return _validate_vin(vin.strip().upper())
 
 
 def sync_vehicle(vin: str, client: VehicleClient) -> Dict[str, Any]:
