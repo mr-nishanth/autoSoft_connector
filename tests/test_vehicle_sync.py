@@ -7,7 +7,7 @@ from typing import Any, List
 
 import pytest
 
-from autosoft_connector import VehicleInputError, sync_vehicle
+from autosoft_connector import VehicleInputError, normalise_vin, sync_vehicle
 
 
 # Stand-ins mirroring automate_connector's error hierarchy (not imported).
@@ -103,6 +103,65 @@ def test_invalid_vin_rejected_before_client_call(bad_vin):
         sync_vehicle(bad_vin, client)
 
     assert client.calls == []
+
+
+@pytest.mark.parametrize(
+    "vin",
+    ["1hgcm82633a004352", "  1HGCM82633A004352\t"],
+)
+def test_sync_vehicle_still_rejects_unnormalised_input(vin):
+    client = FakeClient(result=FakeVehicleRecord(VALID_VIN, "Honda", "Accord", 2003))
+
+    with pytest.raises(VehicleInputError):
+        sync_vehicle(vin, client)
+
+    assert client.calls == []
+
+
+def test_normalise_vin_uppercases_lowercase_input():
+    assert normalise_vin("1hgcm82633a004352") == VALID_VIN
+
+
+def test_normalise_vin_strips_surrounding_whitespace():
+    assert normalise_vin("  1HGCM82633A004352\t") == VALID_VIN
+    assert normalise_vin("\n\t 1hgcm82633a004352 \r\n") == VALID_VIN
+
+
+@pytest.mark.parametrize(
+    "bad_vin",
+    [
+        "1HGCM82633A00435I",  # contains I
+        "1HGCM82633A00435O",  # contains O
+        "1HGCM82633A00435Q",  # contains Q
+        "1hgcm82633a00435i",  # lowercase i -> I after upper-casing
+        " 1HGCM82633A00435o ",  # lowercase o with whitespace
+        "1hgcm82633a00435q",  # lowercase q -> Q after upper-casing
+    ],
+)
+def test_normalise_vin_rejects_ioq(bad_vin):
+    with pytest.raises(VehicleInputError):
+        normalise_vin(bad_vin)
+
+
+@pytest.mark.parametrize(
+    "bad_vin",
+    [
+        "",
+        "   ",
+        "1HGCM82633A00435",  # 16 chars
+        "1HGCM82633A0043521",  # 18 chars
+        " 1HGCM82633A00435 ",  # 16 chars after stripping
+    ],
+)
+def test_normalise_vin_rejects_wrong_length(bad_vin):
+    with pytest.raises(VehicleInputError):
+        normalise_vin(bad_vin)
+
+
+@pytest.mark.parametrize("bad_vin", [None, 12345, b"1HGCM82633A004352"])
+def test_normalise_vin_rejects_non_string(bad_vin):
+    with pytest.raises(VehicleInputError):
+        normalise_vin(bad_vin)
 
 
 @pytest.mark.parametrize(
