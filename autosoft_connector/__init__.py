@@ -6,4 +6,6 @@ from autosoft_connector.vehicle_sync import (
     sync_vehicle,
 )
 
-__all__ = ["VehicleClient", "VehicleInputError", "sync_vehicle"]
+CONNECTOR_NAME = "autosoft"
+
+__all__ = ["CONNECTOR_NAME", "VehicleClient", "VehicleInputError", "sync_vehicle"]
